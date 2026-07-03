@@ -32,4 +32,18 @@ class Usuario {
 
         return false;
     }
+
+    public function login($email){
+
+    $query = "SELECT id, nome, email, senha 
+              FROM " . $this->table . " 
+              WHERE email = :email
+              LIMIT 1";
+
+    $stmt = $this->conn->prepare($query);
+    $stmt->bindParam(":email", $email);
+    $stmt->execute();
+
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
 }

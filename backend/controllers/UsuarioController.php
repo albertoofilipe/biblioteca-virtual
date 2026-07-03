@@ -35,32 +35,48 @@ class UsuarioController {
         }
     }
 
-    public function login() {
-
-    $database = new Database();
-    $db = $database->connect();
+   public function login(){
 
     $data = json_decode(file_get_contents("php://input"));
 
-    $usuarioModel = new Usuario($db);
+    if(!empty($data->email) && !empty($data->senha)){
 
-    $usuario = $usuarioModel->login($data->email);
+        $usuario = $this->usuario->login($data->email);
 
-    if (!$usuario || !password_verify($data->senha, $usuario["senha"])) {
-        http_response_code(401);
-        echo json_encode(["erro" => "Email ou senha inválidos"]);
-        return;
+        if($usuario && password_verify($data->senha, $usuario["senha"])){
+
+            // CRIAR SESSÃO
+            $_SESSION["usuario"] = [
+                "id" => $usuario["id"],
+                "nome" => $usuario["nome"],
+                "email" => $usuario["email"]
+            ];
+
+            echo json_encode([
+                "mensagem" => "Login realizado"
+            ]);
+
+        }else{
+            echo json_encode(["mensagem"=>"Email ou senha inválidos"]);
+        }
+
+    }else{
+        echo json_encode(["mensagem"=>"Dados incompletos"]);
+    }
+}
+
+    public function me(){
+
+        if(isset($_SESSION["usuario"])){
+        echo json_encode($_SESSION["usuario"]);
+        }else{
+        echo json_encode(["mensagem"=>"Não autenticado"]);
+        }
     }
 
-    //salva usuário na sessão
-    $_SESSION["usuario"] = [
-        "id" => $usuario["id"],
-        "nome" => $usuario["nome"],
-        "email" => $usuario["email"]
-    ];
-
-    echo json_encode([
-        "mensagem" => "Login realizado com sucesso"
-    ]);
+    public function logout(){
+    session_destroy();
+    echo json_encode(["mensagem"=>"Logout realizado"]);
 }
+
 }
